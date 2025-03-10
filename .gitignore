@@ -128,3 +128,5 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+/Lambda/cv-data-extract/myenv
+/Lambda/cv-data-extract/cv-data-extract/.aws-sam
