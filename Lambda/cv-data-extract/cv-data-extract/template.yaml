@@ -1,3 +1,7 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: PDF to Text API
+
 Resources:
   PdfToTextFunction:
     Type: AWS::Serverless::Function
@@ -15,6 +19,7 @@ Resources:
           Properties:
             Path: /pdf-to-text
             Method: POST
+            RestApiId: !Ref ApiGatewayApi
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
