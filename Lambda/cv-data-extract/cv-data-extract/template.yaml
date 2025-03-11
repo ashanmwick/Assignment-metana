@@ -21,6 +21,31 @@ Resources:
             Method: POST
             RestApiId: !Ref ApiGatewayApi
 
+  # New Function to Upload CV to S3
+  UploadCvToS3Function:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: upload_cv_to_s3/ #fucntion directory
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - S3WritePolicy:
+            BucketName: !Ref CvBucket
+      Events:
+        UploadCvEvent:
+          Type: Api
+          Properties:
+            Path: /upload-cv
+            Method: POST
+
+  # S3 Bucket to Store CVs
+  CvBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub cv-bucket-${AWS::AccountId}-${AWS::Region}
+
   ApiGatewayApi:
     Type: AWS::Serverless::Api
     Properties:
@@ -32,3 +57,9 @@ Outputs:
   PdfToTextApi:
     Description: "API Gateway endpoint URL for Prod stage"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/pdf-to-text/"
+  UploadCvApi:
+    Description: "API Gateway endpoint URL for uploading CVs"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload-cv/"
+  CvBucketName:
+    Description: "Name of the S3 bucket for storing CVs"
+    Value: !Ref CvBucket
