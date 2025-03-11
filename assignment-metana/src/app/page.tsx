@@ -107,7 +107,7 @@ const Home = () => {
 
     try {
       // Send the file to the submit API as binary with application/pdf Content-Type
-      const submissionResponse = await submitCv(formData.file)
+      const submissionResponse = await submitCv(formData)
 
       // Handle successful submission
       setSubmissionSuccess(true)
