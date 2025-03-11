@@ -1,5 +1,3 @@
-// services/extractService.ts
-
 export const submitCv = async (file: File) => {
     try {
       const formData = new FormData()
