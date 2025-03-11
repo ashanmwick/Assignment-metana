@@ -33,7 +33,7 @@ def lambda_handler(event, context):
 
         # Upload the file to S3
         S3.put_object(
-            Bucket=s3_bucket_name,  # Replace with your bucket name
+            Bucket=s3_bucket_name,  # Fetch
             Key=file_name,
             Body=pdf_file
         )

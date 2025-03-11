@@ -209,7 +209,6 @@ const Home = () => {
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
 
-      {/* New button for submitting CV */}
       <button onClick={handleSubmitCv} disabled={uploading}>
         {uploading ? 'Submitting...' : 'Submit CV'}
       </button>
