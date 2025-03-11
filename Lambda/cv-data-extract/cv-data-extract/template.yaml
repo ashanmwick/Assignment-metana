@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09' #version of the template
 Transform: AWS::Serverless-2016-10-31
-Description: PDF to Text API
+Description: CV Data Extractor
 
 Resources:
   PdfToTextFunction:
@@ -17,7 +17,7 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
-            Path: /pdf-to-text
+            Path: /extract-cv
             Method: POST
             RestApiId: !Ref ApiGatewayApi
 
