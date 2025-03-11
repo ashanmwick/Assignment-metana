@@ -44,6 +44,15 @@ Resources:
             Path: /upload-cv
             Method: POST
             RestApiId: !Ref ApiGatewayApi
+            RequestTemplates:
+              multipart/form-data: |
+                {
+                  "body": "$input.body",
+                  "isBase64Encoded": true,
+                  "headers": {
+                    "Content-Type": "$input.params('header').get('Content-Type')"
+                  }
+                }
 
   # S3 Bucket to Store CVs
   CvBucket:
@@ -63,6 +72,7 @@ Resources:
       StageName: Prod
       BinaryMediaTypes:
         - application/pdf # binary media type
+        - multipart/form-data
       Cors:  # Explicitly disable CORS by not allowing any origins
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
         AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
