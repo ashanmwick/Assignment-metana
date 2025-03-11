@@ -24,7 +24,11 @@ export const extractCvData = async (file: File) => {
   
       return await response.json()
     } catch (error) {
-      throw new Error(error.message || 'An error occurred during the extraction process.')
+      if (error instanceof Error) {
+        throw new Error(error.message || 'An error occurred during the extraction process.')
+      } else {
+        throw new Error('An unknown error occurred during the extraction process.')
+      }
     }
   }
   
