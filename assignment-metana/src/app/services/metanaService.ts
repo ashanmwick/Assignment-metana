@@ -1,9 +1,10 @@
+import axios from 'axios'
 import { GoogleSheetsData } from '../interfaces/GoogleSheetsData'
 
 export const metanaService = async (sheetData: GoogleSheetsData) => {
     try {
         const timestamp = new Date().toISOString();
-        
+
         const cvData = {
             cv_data: {
                 personal_info: {
@@ -25,23 +26,24 @@ export const metanaService = async (sheetData: GoogleSheetsData) => {
             }
         };
 
-        const response = await fetch("https://rnd-assignment.automations-3d6.workers.dev/", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(cvData),
-        });
+        const response = await axios.post(
+            "https://rnd-assignment.automations-3d6.workers.dev/",
+            cvData,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Candidate-Email': 'ashaninduwara2018@gmail.com'  // Added header here
+                }
+            }
+        );
 
-        if (!response.ok) {
-            throw new Error('Failed to extract CV data.');
-        }
-
-        return await response.json();
+        return response.data;
 
     } catch (error) {
-        if (error instanceof Error) {
-            throw new Error(error.message || 'An error occurred during the extraction process.');
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || 'An error occurred during the extraction process.');
+        } else if (error instanceof Error) {
+            throw new Error(error.message || 'An unknown error occurred during the extraction process.');
         } else {
             throw new Error('An unknown error occurred during the extraction process.');
         }
