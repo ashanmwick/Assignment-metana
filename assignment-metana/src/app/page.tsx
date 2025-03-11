@@ -1,114 +1,256 @@
-'use client';
-import { useState } from 'react';
-import axios from 'axios';
+"use client"
+import { useState, ChangeEvent, FormEvent } from 'react';
+
+interface FormData {
+  name: string;
+  email: string;
+  phone: string;
+  education: string;
+  qualifications: string;
+  projects: string;
+  cvFile: File | null;
+}
+
+interface ExtractedCVData {
+  name: string;
+  email: string;
+  phone: string;
+  education: string;
+  qualifications: string;
+  projects: string;
+}
 
 export default function Home() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
     phone: '',
+    education: '',
+    qualifications: '',
+    projects: '',
     cvFile: null,
   });
-  const [message, setMessage] = useState('');
 
-  const handleInputChange = (e:any) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleFileChange = (e:any) => {
-    const file = e.target.files[0];
-    if (file && (file.type === 'application/pdf' || file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')) {
-      setFormData({ ...formData, cvFile: file });
-    } else {
-      alert('Please upload a valid PDF or DOCX file.');
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFormData({ ...formData, cvFile: e.target.files[0] });
     }
   };
 
-  const handleSubmit = async (e:any) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const data = new FormData();
-    data.append('name', formData.name);
-    data.append('email', formData.email);
-    data.append('phone', formData.phone);
-    if (formData.cvFile) {
-      data.append('cvFile', formData.cvFile);
+    if (!formData.cvFile) {
+      alert('Please upload a CV file.');
+      return;
     }
 
+    // Convert the CV file to base64
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64File = event.target?.result as string;
+
+      try {
+        // Send base64 encoded CV to the endpoint to extract details
+        const response = await fetch('https://go3kr2fjmi.execute-api.us-west-2.amazonaws.com/Prod/pdf-to-text/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ cvFile: base64File }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to extract CV details');
+        }
+
+        const extractedData: ExtractedCVData = await response.json();
+
+        // Auto-fill the form with extracted details
+        setFormData((prevData) => ({
+          ...prevData,
+          name: prevData.name || extractedData.name,
+          email: prevData.email || extractedData.email,
+          phone: prevData.phone || extractedData.phone,
+          education: prevData.education || extractedData.education,
+          qualifications: prevData.qualifications || extractedData.qualifications,
+          projects: prevData.projects || extractedData.projects,
+        }));
+      } catch (error) {
+        console.error('Error extracting CV details:', error);
+        alert('Failed to extract CV details. Please try again.');
+      }
+    };
+    reader.readAsDataURL(formData.cvFile);
+  };
+
+  const handleFinalSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!formData.cvFile) {
+      alert('Please upload a CV file.');
+      return;
+    }
+
+    const finalFormData = new FormData();
+    finalFormData.append('name', formData.name);
+    finalFormData.append('email', formData.email);
+    finalFormData.append('phone', formData.phone);
+    finalFormData.append('education', formData.education);
+    finalFormData.append('qualifications', formData.qualifications);
+    finalFormData.append('projects', formData.projects);
+    finalFormData.append('cvFile', formData.cvFile);
+
     try {
-      const response = await axios.post('/api/upload-cv', data, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Submit the final form data
+      const response = await fetch('/api/submit-application', {
+        method: 'POST',
+        body: finalFormData,
       });
-      setMessage(response.data.message);
+
+      if (response.ok) {
+        alert('Application submitted successfully!');
+      } else {
+        alert('Failed to submit application.');
+      }
     } catch (error) {
-      setMessage('Error submitting form. Please try again.');
-      console.error(error);
+      console.error('Error submitting application:', error);
+      alert('Failed to submit application. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h1 className="text-2xl font-bold mb-6 text-center">CV Upload Form</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Name:</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Phone Number:</label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Upload CV (PDF or DOCX):</label>
-            <input
-              type="file"
-              name="cvFile"
-              onChange={handleFileChange}
-              accept=".pdf,.docx"
-              required
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            Submit
-          </button>
-        </form>
-        {message && (
-          <p className="mt-4 text-center text-sm text-green-600">{message}</p>
-        )}
-      </div>
+    <div>
+      <h1>Job Application Form</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label>Name:</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Phone Number:</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>CV Document Upload (PDF or DOCX):</label>
+          <input
+            type="file"
+            name="cvFile"
+            onChange={handleFileChange}
+            accept=".pdf,.docx"
+          />
+        </div>
+        <div>
+          <label>Education:</label>
+          <input
+            type="text"
+            name="education"
+            value={formData.education}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Qualifications:</label>
+          <input
+            type="text"
+            name="qualifications"
+            value={formData.qualifications}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Projects:</label>
+          <input
+            type="text"
+            name="projects"
+            value={formData.projects}
+            onChange={handleInputChange}
+          />
+        </div>
+        <button type="submit">Extract CV Details</button>
+      </form>
+
+      <form onSubmit={handleFinalSubmit}>
+        <div>
+          <label>Name:</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Email:</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Phone Number:</label>
+          <input
+            type="tel"
+            name="phone"
+            value={formData.phone}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Education:</label>
+          <input
+            type="text"
+            name="education"
+            value={formData.education}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Qualifications:</label>
+          <input
+            type="text"
+            name="qualifications"
+            value={formData.qualifications}
+            onChange={handleInputChange}
+          />
+        </div>
+        <div>
+          <label>Projects:</label>
+          <input
+            type="text"
+            name="projects"
+            value={formData.projects}
+            onChange={handleInputChange}
+          />
+        </div>
+        <button type="submit">Submit Application</button>
+      </form>
     </div>
   );
 }
