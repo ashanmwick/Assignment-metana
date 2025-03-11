@@ -8,7 +8,7 @@ export const extractCvData = async (file: File) => {
       const formData = new FormData()
       formData.append('file', file)
   
-      const response = await fetch('http://127.0.0.1:3000/pdf-to-text', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL+"/extract-cv", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/pdf', // Explicitly set the Content-Type to application/pdf

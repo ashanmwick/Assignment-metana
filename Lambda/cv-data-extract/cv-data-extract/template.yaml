@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09' #version of the template
 Transform: AWS::Serverless-2016-10-31
-Description: PDF to Text API
+Description: CV Data Extractor
 
 Resources:
   PdfToTextFunction:
@@ -17,7 +17,7 @@ Resources:
         ApiEvent:
           Type: Api
           Properties:
-            Path: /pdf-to-text
+            Path: /extract-cv
             Method: POST
             RestApiId: !Ref ApiGatewayApi
 
@@ -72,7 +72,7 @@ Resources:
 Outputs:
   PdfToTextApi:
     Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/pdf-to-text/"
+    Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/extract-cv/"
   UploadCvApi:
     Description: "API Gateway endpoint URL for uploading CVs"
     Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/upload-cv/"
