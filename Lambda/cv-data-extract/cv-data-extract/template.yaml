@@ -63,6 +63,11 @@ Resources:
       StageName: Prod
       BinaryMediaTypes:
         - application/pdf # binary media type
+      Cors:  # Explicitly disable CORS by not allowing any origins
+        AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+        AllowOrigin: "'*'"  # Correct key for allowing all origins
+        AllowCredentials: "'true'"
 
 Outputs:
   PdfToTextApi:

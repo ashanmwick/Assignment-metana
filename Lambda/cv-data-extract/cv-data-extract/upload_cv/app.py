@@ -40,6 +40,11 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',  # Allow all origins
+                'Access-Control-Allow-Methods': 'OPTIONS,POST',  # Allow POST method
+                'Access-Control-Allow-Headers': 'Content-Type',  # Allow specific headers
+            },
             'body': json.dumps({'message': 'File uploaded successfully', 'file_name': file_name})
         }
 
