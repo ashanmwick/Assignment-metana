@@ -5,7 +5,7 @@ export const submitCv = async (file: File) => {
       const formData = new FormData()
       formData.append('file', file)
   
-      const response = await fetch('https://jawydencx3.execute-api.us-west-2.amazonaws.com/Prod/upload-cv/', {
+      const response = await fetch(process.env.NEXT_PUBLIC_API_URL+"/upload-cv", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/pdf', 
