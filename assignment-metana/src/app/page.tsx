@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { extractCvData } from '../app/services/extractService'
+import { submitCv } from '../app/services/submitService' // New import for submitCv
 import { FormData } from '../app/interfaces/FormData'
 
 const Home = () => {
@@ -18,6 +19,8 @@ const Home = () => {
   const [uploading, setUploading] = useState<boolean>(false)
   const [uploadSuccess, setUploadSuccess] = useState<boolean>(false)
   const [error, setError] = useState<string>('')
+  const [submissionSuccess, setSubmissionSuccess] = useState<boolean>(false)
+  const [submissionError, setSubmissionError] = useState<string>('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -90,6 +93,28 @@ const Home = () => {
 
     // Submit the form data here if needed (other form fields)
     console.log('Form data:', formData)
+  }
+
+  // New function for handling the submit button to send the CV as binary
+  const handleSubmitCv = async () => {
+    setSubmissionError('')
+    setSubmissionSuccess(false)
+
+    if (!formData.file) {
+      setSubmissionError('Please upload a file before submitting.')
+      return
+    }
+
+    try {
+      // Send the file to the submit API as binary with application/pdf Content-Type
+      const submissionResponse = await submitCv(formData.file)
+
+      // Handle successful submission
+      setSubmissionSuccess(true)
+      alert('CV submitted successfully!')
+    } catch (error) {
+      setSubmissionError('CV submission failed.')
+    }
   }
 
   return (
@@ -177,12 +202,20 @@ const Home = () => {
         </div>
 
         <button type="submit" disabled={uploading}>
-          {uploading ? 'Uploading...' : 'Submit'}
+          {uploading ? 'Uploading...' : 'Submit Form'}
         </button>
 
         {uploadSuccess && <p>File extracted successfully!</p>}
         {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
+
+      {/* New button for submitting CV */}
+      <button onClick={handleSubmitCv} disabled={uploading}>
+        {uploading ? 'Submitting...' : 'Submit CV'}
+      </button>
+
+      {submissionSuccess && <p>CV submitted successfully!</p>}
+      {submissionError && <p style={{ color: 'red' }}>{submissionError}</p>}
     </div>
   )
 }

@@ -1,5 +1,3 @@
-// services/uploadService.ts
-
 export const extractCvData = async (file: File) => {
     try {
       // Check if the file is a PDF before sending it as application/pdf
