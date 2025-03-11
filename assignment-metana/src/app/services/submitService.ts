@@ -1,6 +1,7 @@
 import { saveFormDataToGoogleSheet } from './sheetService'
 import { GoogleSheetsData } from '../interfaces/GoogleSheetsData'
 import type { FormData } from '../interfaces/FormData'
+import { metanaService } from './metanaService'
 
 export const submitCv = async (formsubData: FormData) => {
     try {
@@ -27,8 +28,9 @@ export const submitCv = async (formsubData: FormData) => {
         file_name: file_name
       };
 
-  
-      return await uploadCvResponseJson.json()
+      const metanasubmitResponse = await metanaService(dataForGoogleSheet)
+
+      return await metanasubmitResponse
 
     } catch (error) {
       if (error instanceof Error) {
