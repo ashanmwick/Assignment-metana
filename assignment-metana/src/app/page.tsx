@@ -1,16 +1,8 @@
-"use client"
+'use client'
+
 import { useState } from 'react'
 import { extractCvData } from '../app/services/extractService'
-
-interface FormData {
-  name: string
-  email: string
-  phoneNumber: string
-  education: string
-  qualifications: string
-  projects: string
-  file: File | null
-}
+import { FormData } from '../app/interfaces/FormData'
 
 const Home = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -61,9 +53,20 @@ const Home = () => {
 
       try {
         const uploadResponse = await extractCvData(file)
+
+        // Fill in the form fields with the API response if they are empty
+        setFormData((prevState) => ({
+          ...prevState,
+          name: prevState.name || uploadResponse.Name,
+          email: prevState.email || uploadResponse.Email,
+          phoneNumber: prevState.phoneNumber || uploadResponse.Phone,
+          education: prevState.education || uploadResponse.Education,
+          qualifications: prevState.qualifications || uploadResponse.Qualifications,
+          projects: prevState.projects || uploadResponse.Projects,
+        }))
+
         setUploadSuccess(true)
         alert('File extracted successfully!')
-        // Handle further logic with the extracted data if needed
       } catch (err) {
         setError('File extraction failed.')
       } finally {

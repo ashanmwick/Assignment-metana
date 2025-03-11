@@ -24,13 +24,26 @@ def lambda_handler(event, context):
         # Decode the base64 encoded PDF file
         pdf_file = base64.b64decode(event['body'])
 
+        # Extract text from the PDF
         text = extract_text_from_pdf(BytesIO(pdf_file))
+        
+        # Extract sections and personal info
         sections = extract_sections(text)
         personal_info = extract_personal_info(sections["Personal Info"])
         
+        # Structure the response
+        structured_response = {
+            "Name": personal_info["Name"],
+            "Email": personal_info["Email"],
+            "Phone": personal_info["Phone"],
+            "Education": sections["Education"],
+            "Qualifications": sections["Qualifications"],
+            "Projects": sections["Projects"]
+        }
+        
         return {
             'statusCode': 200,
-            'body': json.dumps({'sections': sections, 'personal_info': personal_info})
+            'body': json.dumps(structured_response, indent=4)
         }
 
     except Exception as e:

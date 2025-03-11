@@ -6,7 +6,7 @@ Resources:
   PdfToTextFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: upload_handler/ #fucntion
+      CodeUri: extract_cv/ #fucntion
       Handler: app.lambda_handler
       Runtime: python3.12
       MemorySize: 128
