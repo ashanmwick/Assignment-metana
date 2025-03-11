@@ -25,12 +25,16 @@ Resources:
   UploadCvToS3Function:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: upload_cv_to_s3/ #fucntion directory
+      CodeUri: upload_cv/ #fucntion directory
       Handler: app.lambda_handler
       Runtime: python3.12
       MemorySize: 128
       Timeout: 10
+      Environment:
+        Variables:
+          S3_BUCKET_NAME: !Ref CvBucket
       Policies:
+        - AWSLambdaBasicExecutionRole
         - S3WritePolicy:
             BucketName: !Ref CvBucket
       Events:
@@ -39,12 +43,19 @@ Resources:
           Properties:
             Path: /upload-cv
             Method: POST
+            RestApiId: !Ref ApiGatewayApi
 
   # S3 Bucket to Store CVs
   CvBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub cv-bucket-${AWS::AccountId}-${AWS::Region}
+      BucketName: !Sub "cv-bucket-${AWS::AccountId}-${AWS::Region}"  # Unique bucket name
+      AccessControl: Private  # Ensure the bucket is private
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
 
   ApiGatewayApi:
     Type: AWS::Serverless::Api
