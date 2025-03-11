@@ -1,256 +1,187 @@
 "use client"
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState } from 'react'
+import { extractCvData } from '../app/services/extractService'
 
 interface FormData {
-  name: string;
-  email: string;
-  phone: string;
-  education: string;
-  qualifications: string;
-  projects: string;
-  cvFile: File | null;
+  name: string
+  email: string
+  phoneNumber: string
+  education: string
+  qualifications: string
+  projects: string
+  file: File | null
 }
 
-interface ExtractedCVData {
-  name: string;
-  email: string;
-  phone: string;
-  education: string;
-  qualifications: string;
-  projects: string;
-}
-
-export default function Home() {
+const Home = () => {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     education: '',
     qualifications: '',
     projects: '',
-    cvFile: null,
-  });
+    file: null,
+  })
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+  const [uploading, setUploading] = useState<boolean>(false)
+  const [uploadSuccess, setUploadSuccess] = useState<boolean>(false)
+  const [error, setError] = useState<string>('')
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFormData({ ...formData, cvFile: e.target.files[0] });
-    }
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target
+    setFormData((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }))
+  }
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Ensure the file is a PDF
+      if (file.type !== 'application/pdf') {
+        alert('Only PDF files are allowed.')
+        return
+      }
 
-    if (!formData.cvFile) {
-      alert('Please upload a CV file.');
-      return;
-    }
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be under 5MB.')
+        return
+      }
 
-    // Convert the CV file to base64
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64File = event.target?.result as string;
+      setFormData((prevState) => ({
+        ...prevState,
+        file: file,
+      }))
+
+      // Trigger the file extraction when file is selected
+      setUploading(true)
+      setError('')
+      setUploadSuccess(false)
 
       try {
-        // Send base64 encoded CV to the endpoint to extract details
-        const response = await fetch('https://go3kr2fjmi.execute-api.us-west-2.amazonaws.com/Prod/pdf-to-text/', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ cvFile: base64File }),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to extract CV details');
-        }
-
-        const extractedData: ExtractedCVData = await response.json();
-
-        // Auto-fill the form with extracted details
-        setFormData((prevData) => ({
-          ...prevData,
-          name: prevData.name || extractedData.name,
-          email: prevData.email || extractedData.email,
-          phone: prevData.phone || extractedData.phone,
-          education: prevData.education || extractedData.education,
-          qualifications: prevData.qualifications || extractedData.qualifications,
-          projects: prevData.projects || extractedData.projects,
-        }));
-      } catch (error) {
-        console.error('Error extracting CV details:', error);
-        alert('Failed to extract CV details. Please try again.');
+        const uploadResponse = await extractCvData(file)
+        setUploadSuccess(true)
+        alert('File extracted successfully!')
+        // Handle further logic with the extracted data if needed
+      } catch (err) {
+        setError('File extraction failed.')
+      } finally {
+        setUploading(false)
       }
-    };
-    reader.readAsDataURL(formData.cvFile);
-  };
+    }
+  }
 
-  const handleFinalSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
 
-    if (!formData.cvFile) {
-      alert('Please upload a CV file.');
-      return;
+    if (!formData.name || !formData.email || !formData.phoneNumber) {
+      alert('Please fill out all required fields.')
+      return
     }
 
-    const finalFormData = new FormData();
-    finalFormData.append('name', formData.name);
-    finalFormData.append('email', formData.email);
-    finalFormData.append('phone', formData.phone);
-    finalFormData.append('education', formData.education);
-    finalFormData.append('qualifications', formData.qualifications);
-    finalFormData.append('projects', formData.projects);
-    finalFormData.append('cvFile', formData.cvFile);
-
-    try {
-      // Submit the final form data
-      const response = await fetch('/api/submit-application', {
-        method: 'POST',
-        body: finalFormData,
-      });
-
-      if (response.ok) {
-        alert('Application submitted successfully!');
-      } else {
-        alert('Failed to submit application.');
-      }
-    } catch (error) {
-      console.error('Error submitting application:', error);
-      alert('Failed to submit application. Please try again.');
+    if (!formData.file) {
+      alert('Please upload a PDF file.')
+      return
     }
-  };
+
+    // Submit the form data here if needed (other form fields)
+    console.log('Form data:', formData)
+  }
 
   return (
     <div>
-      <h1>Job Application Form</h1>
+      <h1>CV Extraction Form</h1>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>Name:</label>
+          <label htmlFor="name">Name</label>
           <input
+            id="name"
             type="text"
             name="name"
             value={formData.name}
-            onChange={handleInputChange}
+            onChange={handleChange}
+            required
           />
         </div>
-        <div>
-          <label>Email:</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Phone Number:</label>
-          <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>CV Document Upload (PDF or DOCX):</label>
-          <input
-            type="file"
-            name="cvFile"
-            onChange={handleFileChange}
-            accept=".pdf,.docx"
-          />
-        </div>
-        <div>
-          <label>Education:</label>
-          <input
-            type="text"
-            name="education"
-            value={formData.education}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Qualifications:</label>
-          <input
-            type="text"
-            name="qualifications"
-            value={formData.qualifications}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Projects:</label>
-          <input
-            type="text"
-            name="projects"
-            value={formData.projects}
-            onChange={handleInputChange}
-          />
-        </div>
-        <button type="submit">Extract CV Details</button>
-      </form>
 
-      <form onSubmit={handleFinalSubmit}>
         <div>
-          <label>Name:</label>
+          <label htmlFor="email">Email</label>
           <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleInputChange}
-          />
-        </div>
-        <div>
-          <label>Email:</label>
-          <input
+            id="email"
             type="email"
             name="email"
             value={formData.email}
-            onChange={handleInputChange}
+            onChange={handleChange}
+            required
           />
         </div>
+
         <div>
-          <label>Phone Number:</label>
+          <label htmlFor="phoneNumber">Phone Number</label>
           <input
-            type="tel"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
+            id="phoneNumber"
+            type="text"
+            name="phoneNumber"
+            value={formData.phoneNumber}
+            onChange={handleChange}
+            required
           />
         </div>
+
         <div>
-          <label>Education:</label>
+          <label htmlFor="education">Education</label>
           <input
+            id="education"
             type="text"
             name="education"
             value={formData.education}
-            onChange={handleInputChange}
+            onChange={handleChange}
           />
         </div>
+
         <div>
-          <label>Qualifications:</label>
+          <label htmlFor="qualifications">Qualifications</label>
           <input
+            id="qualifications"
             type="text"
             name="qualifications"
             value={formData.qualifications}
-            onChange={handleInputChange}
+            onChange={handleChange}
           />
         </div>
+
         <div>
-          <label>Projects:</label>
+          <label htmlFor="projects">Projects</label>
           <input
+            id="projects"
             type="text"
             name="projects"
             value={formData.projects}
-            onChange={handleInputChange}
+            onChange={handleChange}
           />
         </div>
-        <button type="submit">Submit Application</button>
+
+        <div>
+          <label htmlFor="file">Upload PDF</label>
+          <input
+            id="file"
+            type="file"
+            accept="application/pdf"
+            onChange={handleFileChange}
+            required
+          />
+        </div>
+
+        <button type="submit" disabled={uploading}>
+          {uploading ? 'Uploading...' : 'Submit'}
+        </button>
+
+        {uploadSuccess && <p>File extracted successfully!</p>}
+        {error && <p style={{ color: 'red' }}>{error}</p>}
       </form>
     </div>
-  );
+  )
 }
+
+export default Home
