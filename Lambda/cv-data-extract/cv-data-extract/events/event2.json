@@ -1,0 +1,11 @@
+{
+  "body":{
+    "name": "John Doe",
+    "email": "johndoe@example.com",
+    "phoneNumber": "94769246233",
+    "education": "UOM",
+    "qualifications": "sdsdsd",
+    "projects": "sdssdds",
+    "file_name":"dfddfdf.pdf"
+  }
+}

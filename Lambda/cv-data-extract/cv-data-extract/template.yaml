@@ -21,6 +21,24 @@ Resources:
             Method: POST
             RestApiId: !Ref ApiGatewayApi
 
+  TestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: testapi/ #fucntion
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      MemorySize: 128
+      Timeout: 10
+      Policies:
+        - AWSLambdaBasicExecutionRole
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /testapi
+            Method: POST
+            RestApiId: !Ref ApiGatewayApi
+
   # New Function to Upload CV to S3
   UploadCvToS3Function:
     Type: AWS::Serverless::Function
