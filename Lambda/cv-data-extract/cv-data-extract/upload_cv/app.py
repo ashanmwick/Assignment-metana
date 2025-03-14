@@ -1,31 +1,30 @@
 import json
-import base64
 import boto3
+import base64
+import time
 import uuid
 import os
 
 def lambda_handler(event, context):
     try:
+        # Parse the JSON body
+        body = json.loads(event['body'])
 
-        # Check if the request has a body
-        if 'body' not in event:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'No PDF file provided'})
-            }
+        # Extract fields
+        name = body.get('name')
+        email = body.get('email')
+        phoneNumber = body.get('phoneNumber')
+        education = body.get('education')
+        qualifications = body.get('qualifications')
+        projects = body.get('projects')
+        file_base64 = body.get('file')
 
-        # Check if the body is base64 encoded
-        is_base64_encoded = event.get('isBase64Encoded', False)
-        if not is_base64_encoded:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'error': 'Request body must be base64 encoded'})
-            }
+        if not file_base64:
+            return {'statusCode': 400, 'body': json.dumps({'error': 'No file provided'})}
 
-        # Decode the base64 encoded PDF file
-        pdf_file = base64.b64decode(event['body'])
+        # Decode base64 to binary
+        file_content = base64.b64decode(file_base64)
 
-        # Generate a unique file name
         file_name = f"cv_{uuid.uuid4()}.pdf"
 
         S3 = boto3.client("s3")
@@ -35,19 +34,26 @@ def lambda_handler(event, context):
         S3.put_object(
             Bucket=s3_bucket_name,  # Replace with your bucket name
             Key=file_name,
-            Body=pdf_file
+            Body=file_content
         )
 
+        # Return response with all form data
         return {
             'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',  # Allow all origins
-                'Access-Control-Allow-Methods': 'OPTIONS,POST',  # Allow POST method
-                'Access-Control-Allow-Headers': 'Content-Type',  # Allow specific headers
-            },
-            'body': json.dumps({'message': 'File uploaded successfully', 'file_name': file_name})
+            'body': json.dumps({
+                'message': 'File uploaded successfully',
+                'form_data': {
+                    'name': name,
+                    'email': email,
+                    'phoneNumber': phoneNumber,
+                    'education': education,
+                    'fileName': file_name,
+                    'qualifications': qualifications,
+                    'projects': projects
+                }
+            }),
+            'headers': {'Content-Type': 'application/json'}
         }
-
     except Exception as e:
         return {
             'statusCode': 500,
