@@ -130,3 +130,4 @@ dist
 .pnp.*
 /Lambda/cv-data-extract/myenv
 /Lambda/cv-data-extract/cv-data-extract/.aws-sam
+assignment-metana/config/google-credentials.json
