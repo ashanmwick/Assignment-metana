@@ -5,7 +5,7 @@ import { extractCvData } from '../app/services/extractService'
 import { submitCv } from '../app/services/submitService'
 import { FormData } from '../app/interfaces/FormData'
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB Max file size check
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const ACCEPTED_FILE_TYPE = 'application/pdf'
 
 class FileValidationError extends Error {
@@ -30,11 +30,13 @@ const Home = () => {
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [submissionError, setSubmissionError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormData, string> & { submit?: string }>>({})
 
   const handleInputChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+    // Clear error when user starts typing
+    setFieldErrors((prev) => ({ ...prev, [name]: undefined }))
   }, [])
 
   const validateFile = (file: File): void => {
@@ -48,12 +50,16 @@ const Home = () => {
 
   const handleFileChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (!file) {
+      setFieldErrors((prev) => ({ ...prev, file: 'Please select a file' }))
+      return
+    }
 
     try {
       validateFile(file)
       
       setFormData((prev) => ({ ...prev, file }))
+      setFieldErrors((prev) => ({ ...prev, file: undefined }))
       setIsUploading(true)
       setUploadStatus('idle')
       setUploadError(null)
@@ -75,7 +81,7 @@ const Home = () => {
         : 'Failed to process file upload'
       setUploadStatus('error')
       setUploadError(message)
-      // Clear fields on error
+      setFieldErrors((prev) => ({ ...prev, file: message }))
       setFormData((prev) => ({
         ...prev,
         education: '',
@@ -87,28 +93,41 @@ const Home = () => {
     }
   }, [])
 
+  const validateForm = (): boolean => {
+    const errors: Partial<Record<keyof FormData, string>> = {}
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Name is required'
+    }
+    if (!formData.email.trim()) {
+      errors.email = 'Email is required'
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      errors.email = 'Invalid email format'
+    }
+    if (!formData.phoneNumber.trim()) {
+      errors.phoneNumber = 'Phone number is required'
+    }
+    if (!formData.file) {
+      errors.file = 'Please upload a PDF file'
+    }
+
+    setFieldErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
   const handleSubmit = useCallback(async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const requiredFields = [formData.name, formData.email, formData.phoneNumber]
-    if (requiredFields.some(field => !field.trim())) {
-      setSubmissionError('Please fill out all required fields.')
-      setSubmissionStatus('error')
-      return
-    }
-
-    if (!formData.file) {
-      setSubmissionError('Please upload a PDF file.')
+    if (!validateForm()) {
       setSubmissionStatus('error')
       return
     }
 
     try {
       setSubmissionStatus('idle')
-      setSubmissionError(null)
+      setFieldErrors({})
       await submitCv(formData)
       setSubmissionStatus('success')
-      // Reset form after successful submission
       setFormData({
         name: '',
         email: '',
@@ -120,14 +139,22 @@ const Home = () => {
       })
     } catch (error) {
       setSubmissionStatus('error')
-      setSubmissionError('Failed to submit CV. Please try again.')
+      setFieldErrors((prev) => ({
+        ...prev,
+        submit: 'Failed to submit CV. Please try again.'
+      }))
     }
   }, [formData])
 
-  const renderInput = (id: keyof FormData, label: string, type: string, required = false) => (
+  const renderInput = (
+    id: keyof FormData,
+    label: string,
+    type: string,
+    required = false
+  ) => (
     <div>
       <label htmlFor={id} className="block text-sm font-medium text-gray-700">
-        {label}
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
         id={id}
@@ -137,8 +164,13 @@ const Home = () => {
         onChange={handleInputChange}
         required={required}
         disabled={isUploading}
-        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100"
+        className={`mt-1 block w-full px-3 py-2 border ${
+          fieldErrors[id] ? 'border-red-500' : 'border-gray-300'
+        } rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 disabled:bg-gray-100`}
       />
+      {fieldErrors[id] && (
+        <p className="mt-1 text-sm text-red-600">{fieldErrors[id]}</p>
+      )}
     </div>
   )
 
@@ -153,7 +185,7 @@ const Home = () => {
           
           <div>
             <label htmlFor="file" className="block text-sm font-medium text-gray-700">
-              Upload PDF
+              Upload PDF <span className="text-red-500">*</span>
             </label>
             <input
               id="file"
@@ -162,8 +194,13 @@ const Home = () => {
               onChange={handleFileChange}
               required
               disabled={isUploading}
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:file:bg-gray-200"
+              className={`mt-1 block w-full text-sm ${
+                fieldErrors.file ? 'text-red-600' : 'text-gray-500'
+              } file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 disabled:file:bg-gray-200`}
             />
+            {fieldErrors.file && (
+              <p className="mt-1 text-sm text-red-600">{fieldErrors.file}</p>
+            )}
           </div>
 
           {renderInput('education', 'Education', 'text')}
@@ -181,14 +218,14 @@ const Home = () => {
           {uploadStatus === 'success' && (
             <p className="text-sm text-green-600">File processed successfully!</p>
           )}
-          {uploadStatus === 'error' && uploadError && (
+          {uploadStatus === 'error' && uploadError && !fieldErrors.file && (
             <p className="text-sm text-red-600">{uploadError}</p>
           )}
           {submissionStatus === 'success' && (
             <p className="text-sm text-green-600">Application submitted successfully!</p>
           )}
-          {submissionStatus === 'error' && submissionError && (
-            <p className="text-sm text-red-600">{submissionError}</p>
+          {submissionStatus === 'error' && fieldErrors.submit && (
+            <p className="text-sm text-red-600">{fieldErrors.submit}</p>
           )}
         </form>
       </div>
