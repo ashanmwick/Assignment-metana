@@ -5,6 +5,7 @@ import time
 import uuid
 import os
 
+
 def lambda_handler(event, context):
     try:
         # Parse the JSON body
@@ -52,7 +53,11 @@ def lambda_handler(event, context):
                     'projects': projects
                 }
             }),
-            'headers': {'Content-Type': 'application/json'}
+            'headers': {
+                'Access-Control-Allow-Origin': '*',  # Allow all origins
+                'Access-Control-Allow-Methods': 'OPTIONS,POST',  # Allow POST method
+                'Access-Control-Allow-Headers': 'Content-Type',  # Allow specific headers
+            }
         }
     except Exception as e:
         return {

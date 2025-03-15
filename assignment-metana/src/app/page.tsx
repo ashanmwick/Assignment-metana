@@ -91,24 +91,6 @@ const Home = () => {
     console.log('Form data:', formData)
   }
 
-  const handleSubmitCv = async () => {
-    setSubmissionError('')
-    setSubmissionSuccess(false)
-
-    if (!formData.file) {
-      setSubmissionError('Please upload a file before submitting.')
-      return
-    }
-
-    try {
-      const submissionResponse = await submitCv(formData)
-      setSubmissionSuccess(true)
-      alert('CV submitted successfully!')
-    } catch (error) {
-      setSubmissionError('CV submission failed.')
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gray-100 py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-lg">
@@ -226,14 +208,6 @@ const Home = () => {
           {uploadSuccess && <p className="text-sm text-green-600">File extracted successfully!</p>}
           {error && <p className="text-sm text-red-600">{error}</p>}
         </form>
-
-        <button
-          onClick={handleSubmitCv}
-          disabled={uploading}
-          className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:bg-green-300"
-        >
-          {uploading ? 'Submitting...' : 'Submit CV'}
-        </button>
 
         {submissionSuccess && <p className="text-sm text-green-600">CV submitted successfully!</p>}
         {submissionError && <p className="text-sm text-red-600">{submissionError}</p>}
